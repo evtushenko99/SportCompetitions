@@ -41,6 +41,7 @@ public class AthletsActivity extends AppCompatActivity {
     private List<Team> mTeamsList;
     private List<Athletes> mAthletesList;
 
+
     private PrintWriter out;
     private BufferedReader in;
 
