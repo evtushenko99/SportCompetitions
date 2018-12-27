@@ -1,0 +1,21 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/primaryColor</item>
+        <item name="colorPrimaryDark">@color/primaryDarkColor</item>
+        <item name="colorAccent">@color/secondaryColor</item>
+
+    </style>
+    <!--Floating label text style-->
+    <style name="MyHintText" parent="TextAppearance.AppCompat.Small">
+        <item name="android:textColor">@color/design_default_color_primary_dark</item>
+    </style>
+
+    <!--Input field style-->
+    <style name="MyEditText" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">@color/design_default_color_primary_dark</item>
+        <item name="colorControlActivated">@color/design_default_color_primary_dark</item>
+    </style>
+</resources>
