@@ -1,12 +1,13 @@
 package competitions.domain.com.sportcompetitions.model;
 
-public class Seats {
+
+public class Seat {
     private int seats_id;
     private int booked_seats;
     private int free_seats;
     private int price_for_seat;
 
-    public Seats(int seats_id, int booked_seats, int free_seats, int price_for_seat){
+    public Seat(int seats_id, int booked_seats, int free_seats, int price_for_seat){
         this.seats_id = seats_id;
         this.booked_seats = booked_seats;
         this.free_seats = free_seats;
@@ -53,3 +54,4 @@ public class Seats {
                 "Стоимость билета: " + getPrice_for_seat();
     }
 }
+

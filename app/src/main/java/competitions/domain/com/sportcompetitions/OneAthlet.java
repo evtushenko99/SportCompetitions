@@ -2,10 +2,11 @@ package competitions.domain.com.sportcompetitions;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import competitions.domain.com.sportcompetitions.model.Athletes;
+import competitions.domain.com.sportcompetitions.Connection.Commands;
+import competitions.domain.com.sportcompetitions.model.Athlet;
 import competitions.domain.com.sportcompetitions.model.Competition;
 import competitions.domain.com.sportcompetitions.model.Message;
-import competitions.domain.com.sportcompetitions.model.Seats;
+import competitions.domain.com.sportcompetitions.model.Seat;
 import competitions.domain.com.sportcompetitions.model.Team;
 
 
@@ -21,10 +22,14 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -35,25 +40,23 @@ import java.util.List;
 
 public class OneAthlet extends AppCompatActivity {
     public static final int ADD_NOTE_REQUEST = 1;
+    private static final Gson GSON;
+
+    static{
+        GsonBuilder builder = new GsonBuilder();
+        builder.setPrettyPrinting().serializeNulls();
+        GSON = builder.create();
+    }
     private TextView mAthletFirstName;
     private TextView mAthletLastName;
     private TextView mAthletAge;
     private TextView mAthletTeam;
 
-
     private FloatingActionButton mAthletEdit;
 
     private String mAthlet_id;
 
-
-    private List<Competition> mCompetitionList;
-    private List<Seats> mSeatsList;
-    private List<Team> mTeamsList;
-    private List<Athletes> mAthletesList;
-
-
-    private PrintWriter out;
-    private BufferedReader in;
+    private Athlet mAthlet;
 
     private AlertDialog dialog;
     private String mEditString;
@@ -107,10 +110,15 @@ public class OneAthlet extends AppCompatActivity {
         protected Void doInBackground(Void... aVoid) {
             try {
                 Socket socket = new Socket("194.58.96.249", 4026);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
-                sendMessage(Message.DELETE_ATHLET);
+                DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+                DataInputStream inputStream = new DataInputStream(socket.getInputStream());
 
+                outputStream.writeUTF(Commands.DELETE_ATHLET.toString() + "'" + mAthlet.getAthlets_id());
+                mReceiveFromServer = inputStream.readUTF();
+
+                outputStream.close();
+                inputStream.close();
+                socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 cancel(true);
@@ -122,7 +130,7 @@ public class OneAthlet extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             dialog.cancel();
-            if (mReceiveFromServer.equals("[Done]")) {
+            if (mReceiveFromServer.equals("Done")) {
                 Toast.makeText(OneAthlet.this, mReceiveFromServer, Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(OneAthlet.this, AthletsActivity.class);
                 startActivityForResult(intent, ADD_NOTE_REQUEST);
@@ -139,12 +147,15 @@ public class OneAthlet extends AppCompatActivity {
         protected Void doInBackground(Void... voids) {
             try {
                 Socket socket = new Socket("194.58.96.249", 4026);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
-                sendMessage(Message.GET_TEAMS);
-                sendMessage(Message.GET_ONE_ATHLET);
+                DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+                DataInputStream inputStream = new DataInputStream(socket.getInputStream());
 
+                outputStream.writeUTF(Commands.GET_ONE_ATHLET.toString() + "'" + mAthlet_id);
+                mAthlet = GSON.fromJson(inputStream.readUTF(), Athlet.class);
 
+                outputStream.close();
+                inputStream.close();
+                socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 cancel(true);
@@ -155,104 +166,11 @@ public class OneAthlet extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            mAthletFirstName.setText(mAthletesList.get(0).getAthlet_first_name());
-            mAthletLastName.setText(mAthletesList.get(0).getAthlet_last_name());
-            mAthletAge.setText(mAthletesList.get(0).getAthlet_age());
-            for (int i = 0; i < mTeamsList.size(); i++) {
-                if (mAthletesList.get(0).getHistory_of_teams().getTeams_id() == mTeamsList.get(i).getTeams_id()) {
-                    mAthletTeam.setText(mTeamsList.get(i - 1).getName_of_team());
-                }
-            }
-
+            mAthletFirstName.setText(mAthlet.getAthlet_first_name());
+            mAthletLastName.setText(mAthlet.getAthlet_last_name());
+            mAthletAge.setText(mAthlet.getAthlet_age());
+            mAthletTeam.setText(mAthlet.getHistory_of_team());
         }
-    }
-
-    private void sendMessage(Message message) {
-
-        switch (message) {
-            case GET_ONE_ATHLET:
-                out.println(message + mAthlet_id);
-                getAthlets();
-                break;
-            case GET_TEAMS:
-                out.println(message);
-                getTeams();
-                break;
-            case DELETE_ATHLET:
-                out.println(message + mAthletesList.get(0).getAthlet_last_name());
-                getUpdateCompetition();
-                break;
-            case UPDATE_ATHLET:
-                out.println(message + mAthlet_id + ":" + mEditString);
-                getUpdateCompetition();
-                break;
-
-
-        }
-
-    }
-
-    private void getUpdateCompetition() {
-        try {
-            mReceiveFromServer = in.readLine();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void getTeams() {
-        try {
-            String json = in.readLine();
-            // Create parser and parsing recieved JSON
-            JsonParser parser = new JsonParser();
-            JsonElement element = parser.parse(json);
-            HashMap<String, String> clientData = new HashMap<>();
-            mTeamsList.clear();
-            for (int i = 0; i < element.getAsJsonArray().size(); i++) {
-                clientData.put("teams_id", element.getAsJsonArray().get(i).getAsJsonObject().get("teams_id").getAsString());
-                clientData.put("name_of_team", element.getAsJsonArray().get(i).getAsJsonObject().get("name_of_team").getAsString());
-                clientData.put("coach", element.getAsJsonArray().get(i).getAsJsonObject().get("coach").getAsString());
-                clientData.put("captain", element.getAsJsonArray().get(i).getAsJsonObject().get("captain").getAsString());
-
-                Team newTeams = new Team(Integer.parseInt(clientData.get("teams_id")), clientData.get("name_of_team"),
-                        clientData.get("coach"));
-                mTeamsList.add(newTeams);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void getAthlets() {
-        try {
-            String json = in.readLine();
-            // Create parser and parsing recieved JSON
-            JsonParser parser = new JsonParser();
-            JsonElement element = parser.parse(json);
-            HashMap<String, String> clientData = new HashMap<>();
-            mAthletesList.clear();
-            for (int i = 0; i < element.getAsJsonArray().size(); i++) {
-                clientData.put("athletes_id", element.getAsJsonArray().get(i).getAsJsonObject().get("athletes_id").getAsString());
-                clientData.put("athlet_first_name", element.getAsJsonArray().get(i).getAsJsonObject().get("athlet_first_name").getAsString());
-                clientData.put("athlet_last_name", element.getAsJsonArray().get(i).getAsJsonObject().get("athlet_last_name").getAsString());
-                clientData.put("athlet_age", element.getAsJsonArray().get(i).getAsJsonObject().get("athlet_age").getAsString());
-                clientData.put("history_of_teams", element.getAsJsonArray().get(i).getAsJsonObject().get("history_of_teams").getAsString());
-
-                Athletes newAthlet = new Athletes(Integer.parseInt(clientData.get("athletes_id")), clientData.get("athlet_first_name"),
-                        clientData.get("athlet_last_name"), clientData.get("athlet_age"));
-
-                if (!mTeamsList.isEmpty()){
-                    newAthlet.setHistoryOfTeam(mTeamsList.get(Integer.parseInt(clientData.get("history_of_teams"))));
-                }
-                mAthletesList.add(newAthlet);
-
-            }
-        } catch (IOException e) {
-        }
-
     }
 
     private void initListeners() {
@@ -265,9 +183,9 @@ public class OneAthlet extends AppCompatActivity {
                 final TextInputEditText mNewAthletLastName = mView.findViewById(R.id.textInputLayoutAthletLastName);
                 final TextInputEditText mNewAthletAge = mView.findViewById(R.id.textInputLayoutAthletAge);
 
-                mNewAthletFirstName.setText(mAthletesList.get(0).getAthlet_first_name());
-                mNewAthletLastName.setText((mAthletesList.get(0).getAthlet_last_name()));
-                mNewAthletAge.setText((mAthletesList.get(0).getAthlet_age()));
+                mNewAthletFirstName.setText(mAthlet.getAthlet_first_name());
+                mNewAthletLastName.setText((mAthlet.getAthlet_last_name()));
+                mNewAthletAge.setText((mAthlet.getAthlet_age()));
 
                 Button mEditCompetition = mView.findViewById(R.id.button_dialog_edit_athlet);
 
@@ -275,8 +193,8 @@ public class OneAthlet extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         if (!mNewAthletFirstName.getText().toString().isEmpty()) {
-                            mEditString = mNewAthletFirstName.getText().toString() + ":" +
-                                    mNewAthletLastName.getText().toString() + ":" +
+                            mEditString = mNewAthletFirstName.getText().toString() + "'" +
+                                    mNewAthletLastName.getText().toString() + "'" +
                                     mNewAthletAge.getText().toString();
                             new SendEditAthletAsyncTask().execute();
 
@@ -296,10 +214,17 @@ public class OneAthlet extends AppCompatActivity {
         protected Void doInBackground(Void... aVoid) {
             try {
                 Socket socket = new Socket("194.58.96.249", 4026);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
+                DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+                DataInputStream inputStream = new DataInputStream(socket.getInputStream());
 
-                sendMessage(Message.UPDATE_ATHLET);
+                String[] parts = mEditString.split("'");
+                Athlet athletForUpdate = new Athlet(parts[0], parts[1], parts[2]);
+                outputStream.writeUTF(Commands.UPDATE_ATHLET.toString() + "'" + mAthlet.getAthlet_last_name() + "'" + GSON.toJson(athletForUpdate));
+                mReceiveFromServer = inputStream.readUTF();
+
+                outputStream.close();
+                inputStream.close();
+                socket.close();
 
 
             } catch (IOException e) {
@@ -313,7 +238,7 @@ public class OneAthlet extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             dialog.cancel();
-            if (mReceiveFromServer.equals("[Done]")) {
+            if (mReceiveFromServer.equals("Done")) {
                 Toast.makeText(OneAthlet.this, mReceiveFromServer, Toast.LENGTH_SHORT).show();
                 new SendOneAthletAsyncTask().execute();
 
@@ -326,10 +251,7 @@ public class OneAthlet extends AppCompatActivity {
 
 
     private void initViews() {
-        mCompetitionList = new ArrayList<>();
-        mSeatsList = new ArrayList<>();
-        mTeamsList = new ArrayList<>();
-        mAthletesList = new ArrayList<>();
+        mAthlet = null;
 
         mAthletFirstName = findViewById(R.id.textView_One_athlet_first);
         mAthletLastName = findViewById(R.id.textView_One_athlet_last);

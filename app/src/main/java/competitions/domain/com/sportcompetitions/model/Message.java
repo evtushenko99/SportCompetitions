@@ -1,7 +1,7 @@
 package competitions.domain.com.sportcompetitions.model;
 
 public enum  Message {
-    GET_ATHLETES("getAthletes:"),GET_SEATS("getSeats:"),GET_TEAMS("getTeams:"),GET_COMPETITION("getCompetitions:"),
+    GET_ATHLETES("getAthletes:"),GET_SEATS("getSeat:"),GET_TEAMS("getTeams:"),GET_COMPETITION("getCompetitions:"),
     GET_ONE_COMPETITION("getOneCompetition:"),UPDATE_COMPETITION("updateCompetition:"),
     SET_COMPETITION("setCompetition:"),
     DELETE_COMPETITION("removeCompetition:"),UPDATE_ATHLET("updateAthletes:"),

@@ -11,20 +11,22 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import competitions.domain.com.sportcompetitions.model.Athletes;
+import competitions.domain.com.sportcompetitions.model.Athlet;
 
 
 public class AthletAdapter extends RecyclerView.Adapter<AthletAdapter.AthletViewHolder> {
-    private List<Athletes> mAthletes;
+    private List<Athlet> mAthletes;
     private OnItemClickListener mListener;
 
-    public interface OnItemClickListener{
+    public interface OnItemClickListener {
         void onItemClick(int position);
         //void onDeleteClick(int position);
     }
-    public void setOnItemClickListener(OnItemClickListener listener){
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
         mListener = listener;
     }
+
     public static class AthletViewHolder extends RecyclerView.ViewHolder {
         public ImageView mImageView;
         public TextView mTextViewFirstName;
@@ -40,9 +42,9 @@ public class AthletAdapter extends RecyclerView.Adapter<AthletAdapter.AthletView
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(listener != null){
+                    if (listener != null) {
                         int position = getAdapterPosition();
-                        if (position != RecyclerView.NO_POSITION){
+                        if (position != RecyclerView.NO_POSITION) {
                             listener.onItemClick(position);
                         }
                     }
@@ -51,7 +53,7 @@ public class AthletAdapter extends RecyclerView.Adapter<AthletAdapter.AthletView
         }
     }
 
-    public AthletAdapter(List<Athletes> athletes) {
+    public AthletAdapter(List<Athlet> athletes) {
         mAthletes = athletes;
     }
 
@@ -59,12 +61,12 @@ public class AthletAdapter extends RecyclerView.Adapter<AthletAdapter.AthletView
     @Override
     public AthletViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.athlets_item, parent, false);
-        return new AthletViewHolder(v,mListener);
+        return new AthletViewHolder(v, mListener);
     }
 
     @Override
     public void onBindViewHolder(@NonNull AthletViewHolder holder, int position) {
-        Athletes currentItem = mAthletes.get(position);
+        Athlet currentItem = mAthletes.get(position);
 
         holder.mTextViewFirstName.setText(currentItem.getAthlet_first_name());
         holder.mTextViewLastDate.setText(currentItem.getAthlet_last_name());
@@ -76,9 +78,9 @@ public class AthletAdapter extends RecyclerView.Adapter<AthletAdapter.AthletView
     }
 
     //public void sortByDate(){
-       // Collections.sort(mAthletes,Competition.Comparators.DATE);
+    // Collections.sort(mAthletes,Competition.Comparators.DATE);
     //}
-    public void setAthletes(List<Athletes> athletes){
+    public void setAthletes(List<Athlet> athletes) {
         mAthletes = athletes;
         notifyDataSetChanged();
     }
